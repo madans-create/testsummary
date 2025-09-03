@@ -1,16 +1,33 @@
-import nltk
-nltk.download("punkt")
 import streamlit as st
-from sumy.parsers.plaintext import PlaintextParser
-from sumy.nlp.tokenizers import Tokenizer
-from sumy.summarizers.lsa import LsaSummarizer
-from sumy.nlp.stemmers import Stemmer
-from sumy.utils import get_stop_words
+from transformers import pipeline
+from PIL import Image
 
 # -----------------------------
 # Streamlit Page Config & Styling
 # -----------------------------
 st.set_page_config(page_title="Text Summarizer App", page_icon="📝", layout="wide")
+
+# Optional background image
+def set_bg(png_file):
+    from pathlib import Path
+    import base64
+    if Path(png_file).exists():
+        with open(png_file, "rb") as f:
+            encoded = base64.b64encode(f.read()).decode()
+        st.markdown(
+            f"""
+            <style>
+            .stApp {{
+                background-image: url("data:image/png;base64,{encoded}");
+                background-size: cover;
+            }}
+            </style>
+            """,
+            unsafe_allow_html=True
+        )
+
+# Call the function if you have a background image
+# set_bg("background.png")
 
 # Custom CSS for styling
 st.markdown("""
@@ -41,7 +58,8 @@ st.markdown("Enter a paragraph, and get a concise summary instantly!")
 # Sidebar
 # -----------------------------
 st.sidebar.header("Settings")
-max_sentences = st.sidebar.slider("Max number of sentences in summary", min_value=1, max_value=10, value=3)
+max_len = st.sidebar.slider("Max Summary Length", min_value=30, max_value=300, value=120)
+min_len = st.sidebar.slider("Min Summary Length", min_value=10, max_value=100, value=30)
 
 # -----------------------------
 # Main Layout
@@ -57,19 +75,11 @@ with col2:
     if st.button("Summarize"):
         if user_input.strip():
             with st.spinner("Summarizing..."):
-                # Parse the input text
-                parser = PlaintextParser.from_string(user_input, Tokenizer("english"))
-                stemmer = Stemmer("english")
-                summarizer = LsaSummarizer(stemmer)
-                summarizer.stop_words = get_stop_words("english")
-
-                # Generate summary
-                summary = summarizer(parser.document, max_sentences)
-                summary_text = " ".join([str(sentence) for sentence in summary])
-
+                summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
+                summary = summarizer(user_input, max_length=max_len, min_length=min_len, do_sample=False)
                 st.success("✅ Summary generated!")
                 st.markdown("### Summary:")
-                st.write(summary_text)
+                st.write(summary[0]['summary_text'])
         else:
             st.warning("⚠️ Please enter some text to summarize!")
 
@@ -78,4 +88,3 @@ with col2:
 # -----------------------------
 st.markdown("---")
 st.markdown("© 2025 Text Summarizer App | Built with Python & Streamlit 💻")
-
