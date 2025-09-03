@@ -64,3 +64,15 @@ with col2:
                 # Generate summary
                 summary = summarizer(parser.document, max_sentences)
                 summary_text = " ".join([str(sentence) for sentence in summary])
+
+                st.success("✅ Summary generated!")
+                st.markdown("### Summary:")
+                st.write(summary_text)
+        else:
+            st.warning("⚠️ Please enter some text to summarize!")
+
+# -----------------------------
+# Footer
+# -----------------------------
+st.markdown("---")
+st.markdown("© 2025 Text Summarizer App | Built with Python & Streamlit 💻")
